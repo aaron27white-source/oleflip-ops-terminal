@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Glass Logistics Terminal theme tokens ──────────────────────────────────
+   Dark glass is primary; a light variant is provided via [data-theme="light"]. */
+:root {
+  color-scheme: dark;
+  --surface: #0a0d13;
+  --ink: #eef1f6;
+  --panel-border: rgba(255, 255, 255, 0.09);
+  --panel-top: rgba(255, 255, 255, 0.055);
+  --panel-bottom: rgba(255, 255, 255, 0.02);
+  --field-bg: rgba(0, 0, 0, 0.35);
+  --field-border: rgba(255, 255, 255, 0.12);
+  --hairline: rgba(255, 255, 255, 0.07);
+  --glow-a: rgba(79, 140, 255, 0.1);
+  --glow-b: rgba(111, 211, 255, 0.06);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --surface: #eef1f7;
+  --ink: #131722;
+  --panel-border: rgba(15, 22, 38, 0.1);
+  --panel-top: rgba(255, 255, 255, 0.85);
+  --panel-bottom: rgba(255, 255, 255, 0.6);
+  --field-bg: rgba(255, 255, 255, 0.75);
+  --field-border: rgba(15, 22, 38, 0.14);
+  --hairline: rgba(15, 22, 38, 0.08);
+  --glow-a: rgba(79, 140, 255, 0.14);
+  --glow-b: rgba(111, 211, 255, 0.1);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 800px at 15% -10%, var(--glow-a), transparent),
+    radial-gradient(900px 600px at 100% 0%, var(--glow-b), transparent),
+    var(--surface);
+  background-attachment: fixed;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  @apply antialiased;
+}
+
+::selection {
+  background: rgba(79, 140, 255, 0.35);
+}
+
+@keyframes oleflipPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@layer components {
+  /* Frosted panel — the core surface of the terminal */
+  .glass-panel {
+    background: linear-gradient(180deg, var(--panel-top), var(--panel-bottom));
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    @apply rounded-2xl backdrop-blur-xl;
+  }
+  .glass-tile {
+    background: linear-gradient(180deg, var(--panel-top), var(--panel-bottom));
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 16px 32px -24px rgba(0, 0, 0, 0.6);
+    @apply rounded-2xl;
+  }
+
+  /* Mono eyebrow / label used above panels */
+  .eyebrow {
+    font-family: var(--font-mono), "IBM Plex Mono", monospace;
+    @apply text-[11px] font-medium uppercase tracking-[0.1em] text-ink/45;
+  }
+  .mono {
+    font-family: var(--font-mono), "IBM Plex Mono", monospace;
+  }
+
+  /* Form controls */
+  .glass-field {
+    background: var(--field-bg);
+    border: 1px solid var(--field-border);
+    @apply rounded-[10px] px-3.5 py-3 text-ink outline-none transition-colors;
+  }
+  .glass-field:focus {
+    border-color: rgba(79, 140, 255, 0.5);
+  }
+
+  /* Buttons */
+  .btn-accent {
+    background: linear-gradient(180deg, #5a97ff, #4f8cff);
+    @apply rounded-[10px] px-4 py-2.5 text-sm font-semibold text-white transition-transform;
+    box-shadow: 0 12px 24px -12px rgba(79, 140, 255, 0.7);
+  }
+  .btn-accent:active {
+    transform: translateY(1px);
+  }
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--field-border);
+    @apply rounded-[10px] px-4 py-2.5 text-sm font-semibold text-ink/80 transition-colors;
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Hairline divider inside panels */
+  .hairline {
+    border-color: var(--hairline);
+  }
+}
+
+/* Larger tap targets for one-handed phone use. */
+button,
+input,
+select {
+  @apply min-h-11;
+}
+select option {
+  color: #10141b;
+}

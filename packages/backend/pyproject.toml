@@ -1,0 +1,32 @@
+[project]
+name = "oleflip-backend"
+version = "0.1.0"
+description = "FastAPI backend for the IT-parts reselling ops terminal — wraps a pluggable pricing engine (packages/engine)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    # Phase 1 (it-parts-system) runtime deps — its scanner modules import these
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    # Agent system — cron scheduler for the background agent runs
+    "apscheduler>=3.10",
+    # Tier 3 (notifications): Web Push sending. Tier 4 (photos): uploads + image processing.
+    "pywebpush>=1.14",
+    "python-multipart>=0.0.9",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

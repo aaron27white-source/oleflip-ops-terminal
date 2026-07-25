@@ -1,0 +1,32 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# data — inventory is real, but the file itself is not committed
+packages/backend/data/*.db
+packages/backend/data/*.db-wal
+packages/backend/data/*.db-shm
+packages/backend/data/*.db-journal
+# uploaded inventory photos are real user data — never commit them
+packages/backend/data/uploads/
+
+# node / next
+node_modules/
+.next/
+out/
+next-env.d.ts
+
+# env / secrets
+.env
+.env.local
+.env*.local
+
+# os
+.DS_Store
+
+# ts build info
+*.tsbuildinfo

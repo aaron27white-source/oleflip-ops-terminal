@@ -1,0 +1,82 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  lint-typecheck:
+    name: Lint + Type Check (web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+  backend-lint:
+    name: Ruff (Python Lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check packages/backend/app
+
+  sast:
+    name: Bandit (Python SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install bandit
+      # Static security scan of the backend app. Free alternative to CodeQL
+      # (which needs paid GitHub Advanced Security on private repos).
+      # B608 (string-built SQL) is skipped: every service uses parameterized
+      # queries where the only interpolated parts are ?-placeholders and column
+      # names drawn from code-defined whitelists (_FIELDS / _COMPANY_FIELDS) —
+      # all values are bound, so bandit's matches here are false positives.
+      - run: bandit -r packages/backend/app --skip B608
+
+  test:
+    name: Pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # The backend runs against the self-contained reference engine bundled at
+      # packages/engine/ (the default PHASE1_PATH), so no external checkout is
+      # needed. Point PHASE1_PATH at your own engine to test against real logic.
+      - name: Install backend + run tests
+        run: |
+          pip install -e ".[dev]"
+          python -m pytest tests/ -v --tb=short
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Filesystem scan — deterministic on any push (the git base/head diff mode
+      # errors on the first push when base == head). Fails only on verified,
+      # live secrets to avoid false positives on test fixtures.
+      - name: TruffleHog filesystem scan
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            ghcr.io/trufflesecurity/trufflehog:latest \
+            filesystem /repo --only-verified --fail --no-update
