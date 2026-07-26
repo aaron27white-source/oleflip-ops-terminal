@@ -28,17 +28,20 @@ def _req(method, path, body=None):
 
 ITAD_COMPANIES = [
     {"name": "Gulf Coast ITAD", "city": "Houston", "state": "TX", "phone": "555-0101",
-     "status": "active", "reliability": 5, "sells_singles": True,
+     "status": "active", "reliability": 5, "sells_singles": True, "latitude": 29.7604, "longitude": -95.3698,
      "notes": "Reliable pallets of SFF desktops; good on singles."},
     {"name": "Piney Woods IT Assets", "city": "Tyler", "state": "TX", "phone": "555-0134",
-     "status": "contacted", "reliability": 4, "notes": "East TX; monthly decommission lots."},
+     "status": "contacted", "reliability": 4, "latitude": 32.3513, "longitude": -95.3011,
+     "notes": "East TX; monthly decommission lots."},
     {"name": "Razorback Recyclers", "city": "Little Rock", "state": "AR", "phone": "555-0177",
-     "status": "active", "reliability": 4, "sells_singles": True,
+     "status": "active", "reliability": 4, "sells_singles": True, "latitude": 34.7465, "longitude": -92.2896,
      "notes": "Central AR; universities + county surplus."},
     {"name": "Bayou Data Recovery", "city": "Baton Rouge", "state": "LA", "phone": "555-0199",
-     "status": "not-contacted", "reliability": 3, "notes": "North LA corridor; unverified."},
+     "status": "not-contacted", "reliability": 3, "latitude": 30.4515, "longitude": -91.1871,
+     "notes": "North LA corridor; unverified."},
     {"name": "Ark-La-Tex Asset Mgmt", "city": "Shreveport", "state": "LA", "phone": "555-0143",
-     "status": "contacted", "reliability": 4, "notes": "Covers the AR/LA/TX tri-state corridor."},
+     "status": "contacted", "reliability": 4, "latitude": 32.5252, "longitude": -93.7502,
+     "notes": "Covers the AR/LA/TX tri-state corridor."},
 ]
 
 # (title, machine_model, buy_price, buy_shipping, [sell_price if sold])

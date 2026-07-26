@@ -24,6 +24,8 @@ with a cron scheduler, per-agent budget caps, and a human-in-the-loop prompt gat
   </tr>
 </table>
 
+![ITAD supplier map — bounding-box geo-search](docs/screenshots/itad-map.png)
+
 ---
 
 ## Highlights
@@ -33,8 +35,10 @@ with a cron scheduler, per-agent budget caps, and a human-in-the-loop prompt gat
   and lot-compare tools.
 - **Inventory + P&L** — cost/price/profit tracking, realized-profit chart, aging
   stock flags, per-item photo galleries (camera capture on mobile).
-- **ITAD supplier CRM** — companies, call logs, purchases, reliability scoring,
-  and a derived per-supplier summary.
+- **ITAD supplier CRM + map** — companies, call logs, purchases, reliability
+  scoring, a derived per-supplier summary, and an interactive **map with
+  bounding-box (viewport) search** — geocodes addresses (OpenStreetMap Nominatim)
+  so you can source suppliers by region/corridor.
 - **8-agent AI system** — scanner, pricer, listings, inventory, customer, research,
   marketing, and a weekly auditor that scores the others and *proposes* prompt
   improvements that a human must approve before they go live.

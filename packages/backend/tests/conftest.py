@@ -13,6 +13,8 @@ from app.main import app
 def _no_scheduler(monkeypatch):
     # Keep the APScheduler background loop out of the test process.
     monkeypatch.setattr(settings, "agents_scheduler_enabled", False)
+    # Keep geocoding (network) out of the test process; geo tests opt back in.
+    monkeypatch.setattr(settings, "geocoding_enabled", False)
 
 
 @pytest.fixture

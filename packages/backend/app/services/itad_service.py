@@ -4,13 +4,15 @@ Reads go through the itad_company_summary view so per-company stats (call
 count, spend, avg unit price, win rate) are always derived, never stale.
 """
 
+from app.config import settings
 from app.errors import ApiError
+from app.services.geocode import build_query, geocode
 
 _BOOL_FIELDS = ("sells_singles",)
 _COMPANY_FIELDS = (
     "name", "phone", "address", "city", "state", "website", "contact_person",
     "status", "reliability", "sells_singles", "typical_bare_price",
-    "typical_loaded_price", "notes",
+    "typical_loaded_price", "notes", "latitude", "longitude",
 )
 
 
@@ -22,9 +24,25 @@ def _row_to_company(row) -> dict:
     return c
 
 
+def _maybe_geocode(data: dict) -> None:
+    """If coords weren't supplied but a location was, resolve them (best-effort,
+    in place). No-op when geocoding is disabled (e.g. tests) or nothing to geocode."""
+    if not settings.geocoding_enabled:
+        return
+    if data.get("latitude") is not None and data.get("longitude") is not None:
+        return
+    query = build_query(data.get("address"), data.get("city"), data.get("state"))
+    coords = geocode(query)
+    if coords:
+        data["latitude"], data["longitude"] = coords
+
+
 # ── companies ────────────────────────────────────────────────────────────────
 
-def list_companies(conn, search=None, city=None, status=None, min_reliability=None) -> dict:
+def list_companies(conn, search=None, city=None, status=None, min_reliability=None,
+                   bbox=None) -> dict:
+    """List suppliers. `bbox`, when given as (min_lat, min_lng, max_lat, max_lng),
+    restricts results to that map viewport (rows without coordinates are excluded)."""
     where, params = [], []
     if search:
         where.append("(name LIKE ? OR contact_person LIKE ? OR notes LIKE ?)")
@@ -39,6 +57,10 @@ def list_companies(conn, search=None, city=None, status=None, min_reliability=No
     if min_reliability:
         where.append("reliability >= ?")
         params.append(min_reliability)
+    if bbox:
+        min_lat, min_lng, max_lat, max_lng = bbox
+        where.append("latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?")
+        params += [min_lat, max_lat, min_lng, max_lng]
     clause = f"WHERE {' AND '.join(where)}" if where else ""
     rows = conn.execute(
         f"SELECT * FROM itad_company_summary {clause} "
@@ -73,6 +95,7 @@ def get_company(conn, company_id: int) -> dict:
 
 
 def create_company(conn, data: dict) -> dict:
+    _maybe_geocode(data)
     cols = [f for f in _COMPANY_FIELDS if data.get(f) is not None]
     placeholders = ",".join("?" * len(cols))
     values = [int(data[c]) if c in _BOOL_FIELDS else data[c] for c in cols]
@@ -87,8 +110,17 @@ def create_company(conn, data: dict) -> dict:
 
 
 def update_company(conn, company_id: int, data: dict) -> dict:
-    if not _summary_row(conn, company_id):
+    existing = _summary_row(conn, company_id)
+    if not existing:
         raise ApiError(404, "company_not_found", f"No ITAD company {company_id}.")
+    # Re-geocode when the location changed and no explicit coords were given,
+    # using the merged (existing + updated) address so a partial edit still works.
+    if any(k in data for k in ("address", "city", "state")) and \
+            data.get("latitude") is None and data.get("longitude") is None:
+        merged = {k: data.get(k, existing[k]) for k in ("address", "city", "state")}
+        _maybe_geocode(merged)
+        if merged.get("latitude") is not None:
+            data = {**data, "latitude": merged["latitude"], "longitude": merged["longitude"]}
     fields = {f: (int(data[f]) if f in _BOOL_FIELDS else data[f])
               for f in _COMPANY_FIELDS if f in data and data[f] is not None}
     if fields:
@@ -106,6 +138,26 @@ def delete_company(conn, company_id: int) -> None:
         raise ApiError(404, "company_not_found", f"No ITAD company {company_id}.")
     conn.execute("DELETE FROM itad_companies WHERE id = ?", (company_id,))  # cascades calls+purchases
     conn.commit()
+
+
+def geocode_missing(conn) -> dict:
+    """Backfill coordinates for suppliers that have a location but no lat/lng.
+    Best-effort: unresolvable rows are left null. Returns counts."""
+    rows = conn.execute(
+        "SELECT id, address, city, state FROM itad_companies "
+        "WHERE latitude IS NULL AND (address IS NOT NULL OR city IS NOT NULL)"
+    ).fetchall()
+    updated = 0
+    for r in rows:
+        coords = geocode(build_query(r["address"], r["city"], r["state"]))
+        if coords:
+            conn.execute(
+                "UPDATE itad_companies SET latitude = ?, longitude = ? WHERE id = ?",
+                (coords[0], coords[1], r["id"]),
+            )
+            updated += 1
+    conn.commit()
+    return {"checked": len(rows), "geocoded": updated}
 
 
 # ── call logs ────────────────────────────────────────────────────────────────

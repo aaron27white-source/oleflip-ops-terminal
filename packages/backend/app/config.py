@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     # Start the APScheduler background loop at app startup (off in tests).
     agents_scheduler_enabled: bool = True
 
+    # Geocode ITAD supplier addresses on create/update (off in tests — no network).
+    geocoding_enabled: bool = True
+
     # Optional per-agent provider overrides ("" = use the agent's default provider).
     provider_escanner: str = ""
     provider_epricer: str = ""

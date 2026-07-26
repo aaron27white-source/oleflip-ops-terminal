@@ -14,8 +14,19 @@ guard = [Depends(require_api_key)]
 @router.get("/companies")
 def list_companies(search: str | None = None, city: str | None = None,
                    status: str | None = None, min_reliability: int | None = None,
+                   min_lat: float | None = None, min_lng: float | None = None,
+                   max_lat: float | None = None, max_lng: float | None = None,
                    conn=Depends(get_conn)):
-    return svc.list_companies(conn, search, city, status, min_reliability)
+    # A full bounding box (map viewport) restricts results to that area.
+    bbox = None
+    if None not in (min_lat, min_lng, max_lat, max_lng):
+        bbox = (min_lat, min_lng, max_lat, max_lng)
+    return svc.list_companies(conn, search, city, status, min_reliability, bbox=bbox)
+
+
+@router.post("/companies/geocode-missing", dependencies=guard)
+def geocode_missing(conn=Depends(get_conn)):
+    return svc.geocode_missing(conn)
 
 
 @router.get("/companies/{company_id}")

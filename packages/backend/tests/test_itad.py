@@ -75,6 +75,50 @@ def test_filters(client):
     assert any(c["name"] == "Houston Two" for c in houston["items"])
 
 
+def test_bbox_filter_restricts_to_viewport(client):
+    # Explicit coords bypass geocoding. Houston (TX) + Little Rock (AR) are in the
+    # AR/LA/TX corridor box; NYC is far outside it.
+    _make_company(client, name="Houston Geo", latitude=29.76, longitude=-95.36)
+    _make_company(client, name="Little Rock Geo", city="Little Rock", latitude=34.74, longitude=-92.29)
+    _make_company(client, name="NYC Geo", city="New York", latitude=40.71, longitude=-74.01)
+
+    box = "min_lat=29&max_lat=36&min_lng=-97&max_lng=-90"
+    names = {c["name"] for c in client.get(f"/api/itad/companies?{box}").json()["items"]}
+    assert {"Houston Geo", "Little Rock Geo"} <= names
+    assert "NYC Geo" not in names  # outside the viewport
+    # Coordinates round-trip through the recreated summary view.
+    hou = next(c for c in client.get(f"/api/itad/companies?{box}").json()["items"]
+               if c["name"] == "Houston Geo")
+    assert hou["latitude"] == 29.76 and hou["longitude"] == -95.36
+
+
+def test_geocode_on_create(client, monkeypatch):
+    from app.config import settings
+    from app.services import itad_service
+
+    monkeypatch.setattr(settings, "geocoding_enabled", True)
+    monkeypatch.setattr(itad_service, "geocode", lambda q: (30.27, -97.74))  # pretend Austin
+
+    body = _make_company(client, name="Geocoded ITAD", address="100 Congress Ave", city="Austin")
+    assert body["company"]["latitude"] == 30.27
+    assert body["company"]["longitude"] == -97.74
+
+
+def test_geocode_missing_backfill(client, monkeypatch):
+    from app.config import settings
+    from app.services import itad_service
+
+    # Created with geocoding off → no coords yet.
+    cid = _make_company(client, name="Needs Coords", city="Shreveport")["company"]["id"]
+    assert client.get(f"/api/itad/companies/{cid}").json()["company"]["latitude"] is None
+
+    monkeypatch.setattr(settings, "geocoding_enabled", True)
+    monkeypatch.setattr(itad_service, "geocode", lambda q: (32.52, -93.75))
+    res = client.post("/api/itad/companies/geocode-missing")
+    assert res.status_code == 200 and res.json()["geocoded"] >= 1
+    assert client.get(f"/api/itad/companies/{cid}").json()["company"]["latitude"] == 32.52
+
+
 def test_existing_itad_leads_are_copied(conn):
     # A kind='itad' lead seeded before migration 007 should appear as a company.
     # (Fresh test DB runs all migrations in order; simulate a pre-existing lead.)

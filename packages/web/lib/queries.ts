@@ -461,6 +461,38 @@ export function useSuppliers(search: string, city: string, status: string) {
   });
 }
 
+export interface Bounds {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+}
+
+/** Suppliers within a map viewport (bounding box). Rows without coordinates are
+ *  excluded server-side. `enabled` lets the caller hold off until the map is ready. */
+export function useSuppliersInBounds(bounds: Bounds | null, enabled = true) {
+  const params = new URLSearchParams();
+  if (bounds) {
+    params.set("min_lat", String(bounds.minLat));
+    params.set("min_lng", String(bounds.minLng));
+    params.set("max_lat", String(bounds.maxLat));
+    params.set("max_lng", String(bounds.maxLng));
+  }
+  return useQuery<Paged<ItadCompany>>({
+    queryKey: ["suppliers-bbox", bounds],
+    queryFn: () => api.get<Paged<ItadCompany>>(`/itad/companies?${params.toString()}`),
+    enabled: enabled && bounds !== null,
+  });
+}
+
+export function useGeocodeMissing() {
+  const qc = useQueryClient();
+  return useMutation<{ checked: number; geocoded: number }, Error, void>({
+    mutationFn: () => api.post("/itad/companies/geocode-missing", {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["suppliers-bbox"] }),
+  });
+}
+
 export function useSupplier(id: number) {
   return useQuery<ItadDetail>({
     queryKey: ["supplier", id],

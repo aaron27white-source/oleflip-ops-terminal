@@ -11,7 +11,7 @@ def test_health_reports_phase1_and_migrations(client):
     assert body["db_ok"] is True
     assert body["phase1_ok"] is True
     assert body["phase1_parts"] == 12  # bundled reference engine seeds 12 parts
-    assert body["migration_version"] == "020_slack_prefs.sql"
+    assert body["migration_version"] == "021_itad_geo.sql"
 
 
 def test_all_phase1_and_phase2_tables_exist(conn):
@@ -48,7 +48,7 @@ def test_migrations_are_idempotent(temp_db):
     c.close()
     assert cats1 == cats2 == 8
     assert srcs1 == srcs2 == 6  # +1: the Voice Log source (017)
-    assert applied == 20  # twenty migration files, each recorded once
+    assert applied == 21  # twenty-one migration files, each recorded once
 
 
 def test_seed_categories_and_sources_present(conn):

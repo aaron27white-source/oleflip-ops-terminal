@@ -19,6 +19,9 @@ class CompanyIn(BaseModel):
     typical_bare_price: float | None = Field(default=None, ge=0)
     typical_loaded_price: float | None = Field(default=None, ge=0)
     notes: str | None = None
+    # Optional explicit coordinates; if omitted, the server geocodes address/city/state.
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class CompanyUpdate(BaseModel):
@@ -35,6 +38,8 @@ class CompanyUpdate(BaseModel):
     typical_bare_price: float | None = Field(default=None, ge=0)
     typical_loaded_price: float | None = Field(default=None, ge=0)
     notes: str | None = None
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
 
 
 class CallIn(BaseModel):

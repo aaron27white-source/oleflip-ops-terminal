@@ -215,6 +215,8 @@ export interface ItadCompany {
   typical_bare_price: number | null;
   typical_loaded_price: number | null;
   notes: string | null;
+  latitude: number | null;
+  longitude: number | null;
   // from itad_company_summary
   call_count: number;
   last_call_date: string | null;
